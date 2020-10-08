@@ -39,7 +39,9 @@ class Logger {
     std::string format = "[{LEVEL} {DATE}] - {TEXT}";
     std::stringstream logs;
     LEVEL filter_level = LEVEL::ANY;
-    void _log(const std::string_view& str, const LEVEL& level){
+    bool LogToFile = false;
+    std::string_view LogFile = "./.log";
+    std::string _log(const std::string_view& str, const LEVEL& level){
         std::string_view date = this->currentDateTime(),
             levelstr = this->level_to_str[level],
             file = __FILE__;
@@ -54,14 +56,21 @@ class Logger {
                 form.replace(form.find(i[0]), i[0].size(), i[1]);
             }
             this->logs << form;
-            std::cout << form;
+            return form;
     }
     bool _checkLevel(const LEVEL& level){
         return (this->filter_level == LEVEL::ANY || this->filter_level == level || level == LEVEL::ANY);
     }
     void _on_log(const LOG& log){
         if( this->_checkLevel(log.level)){
-            this->_log(log.content, log.level);
+            std::string_view out = this->_log(log.content, log.level);
+            std::cout << out;
+            if(this->LogToFile){
+                std::ofstream file;
+                file.open(this->LogFile);
+                file << this->logs.str();
+                file.close();
+            }
         }
     }
 
@@ -104,5 +113,11 @@ class Logger {
     void log(const std::string_view& str){
         LOG _logs {.content = str, .date = this->currentDateTime(), .level = this->level, .filter_level = this->filter_level};
         this->_on_log(_logs);
+    }
+    void setLog(bool x){
+        this->LogToFile = x;
+    }
+    void setLogFile(const std::string_view& x){
+        this->LogFile = x;
     }
 };
